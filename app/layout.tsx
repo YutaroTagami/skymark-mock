@@ -9,8 +9,8 @@ const noto = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "藤森工業株式会社様 - モックアップサイト",
-  description: "オンライン図面設計・見積システム",
+  title: "スカイマーク株式会社様 - モックアップサイト",
+  description: "SPOTアサインシステム",
 };
 
 export default function RootLayout({
