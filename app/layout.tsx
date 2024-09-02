@@ -11,6 +11,14 @@ const noto = Noto_Sans_JP({
 export const metadata: Metadata = {
   title: "スカイマーク株式会社様 - モックアップサイト",
   description: "SPOTアサインシステム",
+  robots: {
+    index: false,
+    follow: false,
+    nocache: true,
+    noarchive: true,
+    noimageindex: true,
+    nosnippet: true,
+  },
 };
 
 export default function RootLayout({
