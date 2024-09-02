@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import Image from "next/image";
 
 // 時間からcolStartとcolEndを計算する関数
 const calculateColIndex = (hour: number, minute: number) => {
@@ -8,6 +9,20 @@ const calculateColIndex = (hour: number, minute: number) => {
     return 203; // 翌日の0:00は特別な位置に対応
   }
   return (hour - 8) * 12 + Math.floor(minute / 5);
+};
+
+// スケジュールの背景色を設定するための関数
+const addBackgroundCellColor = (
+  rowIndex: number,
+  startTime: string,
+  endTime: string,
+  color: string
+) => {
+  const [startHour, startMinute] = startTime.split(':').map(Number);
+  const [endHour, endMinute] = endTime.split(':').map(Number);
+  const colStart = calculateColIndex(startHour, startMinute);
+  const colEnd = calculateColIndex(endHour, endMinute);
+  return { rowIndex, colStart, colEnd, color };
 };
 
 // 予定を追加するための関数
@@ -49,21 +64,37 @@ export default function Calendar() {
   const labelWidth = 'calc(120 / 1920 * 100vw)';
   const headerHeight = 'calc(40 / 1920 * 100vw)';
 
+  // 背景色
+  const [backgroundCells, setBackgroundCells] = useState<{ rowIndex: number; colStart: number; colEnd: number; color: string }[]>([
+    addBackgroundCellColor(2, '08:00', '09:00', 'lightgray'),
+    addBackgroundCellColor(2, '15:00', '16:00', 'lightgray'),
+    addBackgroundCellColor(2, '16:00', '17:00', 'dimgray'),
+    addBackgroundCellColor(2, '17:00', '22:00', 'lightgray'),
+    addBackgroundCellColor(5, '8:00', '20:00', 'lightgray'),
+    addBackgroundCellColor(5, '8:00', '9:00', 'lightgray'),
+    addBackgroundCellColor(5, '21:00', '0:00', 'lightgray'),
+    addBackgroundCellColor(5, '21:00', '0:00', 'lightgray'),
+    addBackgroundCellColor(6, '8:00', '12:00', 'lightgray'),
+    addBackgroundCellColor(6, '19:00', '0:00', 'lightgray'),
+    addBackgroundCellColor(7, '8:00', '9:00', 'lightgray'),
+    addBackgroundCellColor(7, '22:00', '0:00', 'lightgray'),
+  ]);
+
   const [scheduledCells, setScheduledCells] = useState<{ rowIndex: number; colStart: number; colEnd: number; startTime: string; endTime: string; leftNumber: string; rightNumber: string; color: string }[]>([
     // 1段目
     addScheduledCell(0, '08:00', '08:40', '', '513', 'blue'), // 8:00〜8:40
-    addScheduledCell(0, '08:50', '09:30', '503', '201', 'blue'), // 8:50〜9:30
-    addScheduledCell(0, '09:40', '10:30', '503', '201', 'blue'), // 9:40〜10:30
-    addScheduledCell(0, '11:00', '11:45', '503', '201', 'blue'), // 11:00〜11:45
-    addScheduledCell(0, '12:20', '13:00', '503', '201', 'blue'), // 12:20〜13:00
-    addScheduledCell(0, '13:50', '14:35', '503', '201', 'blue'), // 13:50〜14:35
-    addScheduledCell(0, '14:55', '15:35', '503', '201', 'blue'), // 14:55〜15:35
-    addScheduledCell(0, '16:20', '17:05', '503', '201', 'blue'), // 16:20〜17:05
-    addScheduledCell(0, '17:35', '18:25', '503', '201', 'red'), // 17:35〜18:25
-    addScheduledCell(0, '19:15', '20:00', '503', '201', 'blue'), // 19:15〜20:00
-    addScheduledCell(0, '20:20', '21:15', '503', '201', 'blue'), // 20:20〜21:15
-    addScheduledCell(0, '21:40', '22:30', '503', '201', 'blue'), // 21:40〜22:30
-    addScheduledCell(0, '22:55', '00:00', '503', '201', 'blue'), // 22:55〜0:00
+    addScheduledCell(0, '08:50', '09:30', '300', '', 'blue'), // 8:50〜9:30
+    addScheduledCell(0, '09:40', '10:30', '510', '', 'blue'), // 9:40〜10:30
+    addScheduledCell(0, '11:00', '11:45', '302', '011', 'blue'), // 11:00〜11:45
+    addScheduledCell(0, '12:20', '13:00', '710', '105', 'blue'), // 12:20〜13:00
+    addScheduledCell(0, '13:50', '14:35', '008', '719', 'blue'), // 13:50〜14:35
+    addScheduledCell(0, '14:55', '15:35', '714', '519', 'blue'), // 14:55〜15:35
+    addScheduledCell(0, '16:20', '17:05', '716', '521', 'blue'), // 16:20〜17:05
+    addScheduledCell(0, '17:35', '18:25', '112', '523', 'red'), // 17:35〜18:25
+    addScheduledCell(0, '19:15', '20:00', '520', '027', 'blue'), // 19:15〜20:00
+    addScheduledCell(0, '20:20', '21:15', '022', '119', 'blue'), // 20:20〜21:15
+    addScheduledCell(0, '21:40', '22:30', '024', '', 'blue'), // 21:40〜22:30
+    addScheduledCell(0, '22:55', '00:00', '522', '', 'blue'), // 22:55〜0:00
 
     // 2段目
     addScheduledCell(1, '08:00', '08:20', '503', '201', 'blue'), // 8:00〜8:20
@@ -107,7 +138,9 @@ export default function Calendar() {
     addScheduledCell(6, '16:50', '17:55', '503', '201', 'blue'), // 16:50〜17:55
   ]);
 
+  const [modalPosition, setModalPosition] = useState<{ top: number; left: number } | null>(null);
   const [draggedGroup, setDraggedGroup] = useState<{ rowIndex: number; colStart: number; colEnd: number; startTime: string; endTime: string; leftNumber: string; rightNumber: string; color: string } | null>(null);
+  const [selectedCell, setSelectedCell] = useState<{ rowIndex: number; colStart: number; colEnd: number } | null>(null);
   const dragPreviewRef = useRef<HTMLDivElement | null>(null);
 
   const isScheduled = (rowIndex: number, colIndex: number): boolean => {
@@ -116,7 +149,16 @@ export default function Calendar() {
     );
   };
 
+  const isBackgroundColored = (rowIndex: number, colIndex: number): string | undefined => {
+    const backgroundCell = backgroundCells.find(
+      (cell) => cell.rowIndex === rowIndex && colIndex >= cell.colStart && colIndex <= cell.colEnd
+    );
+    return backgroundCell ? backgroundCell.color : undefined;
+  };
+
   const handleDragStart = (e: React.DragEvent<HTMLSpanElement>, rowIndex: number, colStart: number, colEnd: number) => {
+    setSelectedCell(null);
+
     const draggedCell = scheduledCells.find(
       (cell) => cell.rowIndex === rowIndex && cell.colStart === colStart && cell.colEnd === colEnd
     );
@@ -175,20 +217,61 @@ export default function Calendar() {
     }
   };
 
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (selectedCell !== null) {
+        setSelectedCell(null);
+        setModalPosition(null); // モーダルを非表示にする
+      }
+    };
+
+    document.addEventListener("click", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("click", handleOutsideClick);
+    };
+  }, [selectedCell]);
+
+
+  const handleCellClick = (
+    e: React.MouseEvent<HTMLDivElement>,
+    rowIndex: number,
+    colStart: number,
+    colEnd: number
+  ) => {
+    setSelectedCell({ rowIndex, colStart, colEnd });
+
+    // モーダルの位置を設定（クリックされたセルの右側に表示）
+    const cellRect = e.currentTarget.getBoundingClientRect();
+    setModalPosition({
+      top: cellRect.top + window.scrollY,
+      left: cellRect.right + window.scrollX + 10, // 10px右側にオフセット
+    });
+
+    e.stopPropagation();
+  };
+
   const getStartMinute = (colStart: number) => (colStart % 12) * 5;
   const getEndMinute = (colEnd: number) => ((colEnd + 1) % 12) * 5;
 
   const getTextColor = (color: string): string => {
-    if (color === 'blue' || color === 'red') return '#FFFFFF'; //や赤の場合は白
-    if (color === 'white') return '#2B2B2B'; // 白の場合は黒
-    return '#000000'; // デフォルトの文字色
+    if (color === 'blue' || color === 'red') return '#FFFFFF';
+    if (color === 'white') return '#2B2B2B';
+    return '#000000';
   };
 
   const getBackgroundColor = (color: string): string => {
     if (color === 'blue') return '#071A6D';
     if (color === 'red') return '#DC3636';
     if (color === 'white') return '#F9F9F9';
-    return 'transparent'; // デフォルトの背景色
+    return 'transparent';
+  };
+
+  const getCellOpacity = (rowIndex: number, colStart: number, colEnd: number) => {
+    if (selectedCell) {
+      return selectedCell.rowIndex === rowIndex && colStart === selectedCell.colStart && colEnd === selectedCell.colEnd ? 1 : 0.2;
+    }
+    return 1;
   };
 
   return (
@@ -306,6 +389,7 @@ export default function Calendar() {
               display: 'flex',
               flexDirection: 'column',
               justifyContent: 'center',
+              backgroundColor: typeof row !== 'string' && row.label === "401" ? '#DFAC3B' : 'transparent',
             }}
           >
             <span style={{ fontWeight: 'bold', fontSize: 'calc(16 / 1920 * 100vw)' }}>
@@ -327,6 +411,7 @@ export default function Calendar() {
                 height: calendarCellHeight,
                 borderLeft: '1px solid #ccc',
                 borderRight: hourIndex === topRow.length - 1 ? '1px solid #ccc' : 'none',
+                backgroundColor: isBackgroundColored(rowIndex, hourIndex * 12) || 'transparent',
               }}
             >
               {Array.from({ length: 12 }).map((_, minuteIndex) => {
@@ -351,6 +436,7 @@ export default function Calendar() {
                     {isScheduled(rowIndex, colIndex) && isFirstInGroup && (
                       <div
                         draggable={isDraggable}
+                        onClick={(e) => handleCellClick(e, rowIndex, associatedGroup.colStart, associatedGroup.colEnd)}
                         onDragStart={(e) => {
                           if (associatedGroup) {
                             handleDragStart(e, associatedGroup.rowIndex, associatedGroup.colStart, associatedGroup.colEnd);
@@ -364,7 +450,7 @@ export default function Calendar() {
                           height: '100%',
                           backgroundColor: getBackgroundColor(associatedGroup?.color || ''),
                           color: getTextColor(associatedGroup?.color || ''),
-                          cursor: isDraggable ? 'move' : 'default',
+                          cursor: 'pointer',
                           border: 'none',
                           borderTopLeftRadius: '8px',
                           borderBottomLeftRadius: '8px',
@@ -377,6 +463,7 @@ export default function Calendar() {
                           padding: '0 4px',
                           boxSizing: 'border-box',
                           boxShadow: '0px 2px 2px 0px #0000004D',
+                          opacity: getCellOpacity(rowIndex, associatedGroup.colStart, associatedGroup.colEnd),
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 0', flexDirection: 'column', height: '100%' }}>
@@ -404,7 +491,28 @@ export default function Calendar() {
           ))}
         </div>
       ))}
+
+      {modalPosition && (
+        <div
+          style={{
+            position: 'absolute',
+            top: modalPosition.top,
+            left: modalPosition.left,
+            width: 'max-content',
+            zIndex: 1000,
+          }}
+        >
+          <Image
+            src="/card.png"
+            alt={"Card"}
+            height={305}
+            width={348}
+            style={{ objectFit: "contain", width: "calc(348 / 1920 * 100vw)" }}
+            priority
+          />
+        </div>
+      )}
     </div>
+
   );
 }
-
